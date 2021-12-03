@@ -618,7 +618,7 @@ func (cn *Peer) request(r RequestIndex) (more bool, err error) {
 		cn.validReceiveChunks = make(map[RequestIndex]int)
 	}
 	cn.validReceiveChunks[r]++
-	cn.t.pendingRequests.Inc(r)
+	cn.t.pendingRequests[r] = cn
 	cn.t.lastRequested[r] = time.Now()
 	cn.updateExpectingChunks()
 	ppReq := cn.t.requestIndexToRequest(r)
@@ -1547,10 +1547,8 @@ func (c *Peer) deleteRequest(r RequestIndex) bool {
 		f(PeerRequestEvent{c, c.t.requestIndexToRequest(r)})
 	}
 	c.updateExpectingChunks()
-	c.t.pendingRequests.Dec(r)
-	if c.t.pendingRequests.Get(r) == 0 {
-		delete(c.t.lastRequested, r)
-	}
+	delete(c.t.pendingRequests, r)
+	delete(c.t.lastRequested, r)
 	return true
 }
 
