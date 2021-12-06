@@ -161,9 +161,9 @@ func (p *Peer) getDesiredRequestState() (desired desiredRequestState) {
 			allowedFast := p.peerAllowedFast.ContainsInt(pieceIndex)
 			p.t.piece(pieceIndex).undirtiedChunksIter.Iter(func(ci request_strategy.ChunkIndex) {
 				r := p.t.pieceRequestIndexOffset(pieceIndex) + ci
-				//if p.t.pendingRequests.Get(r) != 0 && !p.actualRequestState.Requests.Contains(r) {
+				// if p.t.pendingRequests.Get(r) != 0 && !p.actualRequestState.Requests.Contains(r) {
 				//	return
-				//}
+				// }
 				if !allowedFast {
 					// We must signal interest to request this. TODO: We could set interested if the
 					// peers pieces (minus the allowed fast set) overlap with our missing pieces if
@@ -211,6 +211,7 @@ func (p *Peer) applyRequestState(next desiredRequestState) bool {
 	}
 	more := true
 	requestHeap := &next.Requests
+	t := p.t
 	heap.Init(requestHeap)
 	for requestHeap.Len() != 0 && maxRequests(current.Requests.GetCardinality()) < p.nominalMaxRequests() {
 		req := heap.Pop(requestHeap).(RequestIndex)
@@ -219,9 +220,9 @@ func (p *Peer) applyRequestState(next desiredRequestState) bool {
 			// requests, so we can skip this one with no additional consideration.
 			continue
 		}
-		existing := p.t.pendingRequests[req]
-		if existing != nil && existing != p && existing.actualRequestState.Requests.GetCardinality()-existing.cancelledRequests.GetCardinality() > current.Requests.GetCardinality() {
-			existing.cancel(req)
+		existing := t.requestingPeer(req)
+		if existing != nil && existing != p && existing.uncancelledRequests() > current.Requests.GetCardinality() {
+			t.cancelRequest(req)
 		}
 		more = p.mustRequest(req)
 		if !more {

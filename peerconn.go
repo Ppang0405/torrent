@@ -1547,8 +1547,10 @@ func (c *Peer) deleteRequest(r RequestIndex) bool {
 		f(PeerRequestEvent{c, c.t.requestIndexToRequest(r)})
 	}
 	c.updateExpectingChunks()
-	delete(c.t.pendingRequests, r)
-	delete(c.t.lastRequested, r)
+	if c.t.requestingPeer(r) == c {
+		delete(c.t.pendingRequests, r)
+		delete(c.t.lastRequested, r)
+	}
 	return true
 }
 
@@ -1689,4 +1691,8 @@ func (p *Peer) TryAsPeerConn() (*PeerConn, bool) {
 
 func (pc *PeerConn) isLowOnRequests() bool {
 	return pc.actualRequestState.Requests.IsEmpty()
+}
+
+func (p *Peer) uncancelledRequests() uint64 {
+	return p.actualRequestState.Requests.GetCardinality() - p.cancelledRequests.GetCardinality()
 }
