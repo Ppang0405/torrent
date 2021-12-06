@@ -1640,7 +1640,7 @@ func (c *PeerConn) pexEvent(t pexEventType) pexEvent {
 }
 
 func (c *PeerConn) String() string {
-	return fmt.Sprintf("connection %p", c)
+	return fmt.Sprintf("%T %p [id=%q, exts=%v, v=%q]", c, c, c.PeerID, c.PeerExtensionBytes, c.PeerClientName)
 }
 
 func (c *Peer) trust() connectionTrust {
